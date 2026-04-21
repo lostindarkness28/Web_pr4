@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ВЕС API Control Panel</title>
+    <style>
+        :root { --get: #2ecc71; --post: #3498db; --patch: #f1c40f; --delete: #e74c3c; --bg: #f8fafc; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: #1e293b; padding: 20px; }
+        .wrapper { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { padding: 20px; background: white; border-bottom: 2px solid #f1f5f9; }
+        .header h1 { margin: 0; font-size: 1.25rem; color: #0f172a; display: flex; align-items: center; gap: 10px; }
+        
+        .content { padding: 20px; }
+        .btn-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        
+        .row-btn { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-radius: 8px; color: white; border: none; font-weight: 600; cursor: pointer; text-align: left; transition: transform 0.1s; }
+        .row-btn:active { transform: scale(0.98); }
+        .method { background: rgba(0,0,0,0.15); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-right: 10px; }
+        
+        .get { background: var(--get); } .post { background: var(--post); } .patch { background: var(--patch); color: #856404; } .delete { background: var(--delete); }
+
+        .json-viewer { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .json-viewer h3 { font-size: 0.875rem; color: #64748b; margin-top: 0; text-transform: uppercase; }
+        pre { background: #f8fafc; padding: 12px; border-radius: 6px; font-size: 0.85rem; border: 1px solid #f1f5f9; overflow-x: auto; color: #334155; margin: 0; }
+
+        .console { background: #0f172a; color: #38bdf8; padding: 20px; font-family: 'Fira Code', monospace; font-size: 0.8rem; }
+        .status-pill { display: inline-block; padding: 4px 12px; border-radius: 999px; background: #22c55e; color: white; font-size: 0.75rem; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <div class="header">
+        <h1>🌬️ Моніторинг ВЕС: Інтерактивний API Симулятор</h1>
+    </div>
+
+    <div class="content">
+        <div class="btn-list">
+            <button class="row-btn get" onclick="callApi('/api/wind-plants')">
+                <span><span class="method">GET</span> /api/wind-plants</span>
+                <span>Отримати всі ВЕС</span>
+            </button>
+            <button class="row-btn get" onclick="callApi('/api/wind-plants/1/turbines')">
+                <span><span class="method">GET</span> /api/wind-plants/1/turbines</span>
+                <span>Аналіз потужності</span>
+            </button>
+            <button class="row-btn post" onclick="callApi('/api/wind-plants', 'POST', {name: 'ВЕС Південна', turbineCount: 12, turbinePower: 2500})">
+                <span><span class="method">POST</span> /api/wind-plants</span>
+                <span>Створити нову ВЕС</span>
+            </button>
+            <button class="row-btn patch" onclick="callApi('/api/wind-plants/1/readings', 'PATCH', {windSpeed: 18.5, currentPower: 29000})">
+                <span><span class="method">PATCH</span> /api/wind-plants/1/readings</span>
+                <span>Оновити датчики</span>
+            </button>
+            <button class="row-btn delete" onclick="callApi('/api/wind-plants/2', 'DELETE')">
+                <span><span class="method">DELETE</span> /api/wind-plants/2</span>
+                <span>Видалити об'єкт</span>
+            </button>
+        </div>
+
+        <div class="json-viewer">
+            <h3>📊 Поточні дані об'єкта</h3>
+            <pre id="data-view">// Очікування запиту...</pre>
+        </div>
+    </div>
+
+    <div class="console">
+        <div id="status-line" style="display:none"><span class="status-pill" id="st-code">HTTP 200 OK</span></div>
+        <div id="log-view" style="white-space: pre-wrap;">// Відповідь сервера з'явиться тут...</div>
+    </div>
+</div>
+
+<script>
+    async function callApi(path, method = 'GET', body = null) {
+        const options = { method };
+        if (body) {
+            options.headers = { 'Content-Type': 'application/json' };
+            options.body = JSON.stringify(body);
+        }
+
+        try {
+            const res = await fetch(path, options);
+            const data = await res.json();
+            const prettyData = JSON.stringify(data, null, 4);
+
+            document.getElementById('data-view').textContent = prettyData;
+            document.getElementById('log-view').textContent = prettyData;
+            
+            const pill = document.getElementById('st-code');
+            pill.textContent = `HTTP ${res.status} ${res.statusText || (res.status === 201 ? 'Created' : 'OK')}`;
+            document.getElementById('status-line').style.display = 'block';
+
+        } catch (e) {
+            document.getElementById('log-view').textContent = "ERROR: " + e.message;
+        }
+    }
+</script>
+
+</body>
+</html>
